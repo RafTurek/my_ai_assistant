@@ -40,17 +40,38 @@
         button:hover {
             background-color: #218838;
         }
-        #response {
+        #chat-history {
             margin-top: 20px;
             padding: 10px;
             background-color: #fff;
             border: 1px solid #ccc;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+        }
+        .assistant-message {
+            background-color: #f5f5f5;
         }
     </style>
 </head>
 <body>
     <h1>Asystent AI</h1>
     <form id="ask-form">
+        <label for="chat-topic">Wybierz lub utwórz czat:</label><br>
+        <select id="chat-topic" name="chat-topic">
+            {% for topic in chat_topics %}
+                <option value="{{ topic }}">{{ topic }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" id="new-chat-topic" placeholder="Nowy temat czatu">
+        <button type="button" id="create-chat">Utwórz nowy czat</button><br><br>
         <label for="prompt">Twoje pytanie:</label><br>
         <input type="text" id="prompt" name="prompt" required placeholder="Wpisz swoje pytanie..."><br><br>
         <label for="model">Wybierz model:</label><br>
@@ -61,20 +82,29 @@
         </select><br><br>
         <button type="submit">Zapytaj</button>
     </form>
-    <h2>Odpowiedź:</h2>
-    <div id="response">Tutaj pojawi się odpowiedź asystenta.</div>
+    <h2>Historia czatu: <span id="current-chat-topic">Ogólny</span></h2>
+    <div id="chat-history">
+        {% for message in chat_history.get('Ogólny', []) %}
+            <div class="message {% if message.role == 'user' %}user-message{% else %}assistant-message{% endif %}">
+                <strong>{{ message.role }}:</strong> {{ message.content }}<br>
+                <small>Model: {{ message.model }}</small>
+            </div>
+        {% endfor %}
+    </div>
+    <button id="clear-history" type="button">Wyczyść historię</button>
 
     <script>
         // Obsługa formularza
         document.getElementById('ask-form').addEventListener('submit', async (e) => {
             e.preventDefault();  // Zapobiega domyślnej akcji formularza (przeładowaniu strony)
 
-            // Pobierz pytanie i wybrany model z formularza
+            // Pobierz pytanie, wybrany model i temat czatu z formularza
             const prompt = document.getElementById('prompt').value;
             const model = document.getElementById('model').value;
+            const chatTopic = document.getElementById('chat-topic').value;
 
-            // Wyczyść poprzednią odpowiedź
-            document.getElementById('response').textContent = "Oczekiwanie na odpowiedź...";
+            // Wyczyść pole pytania
+            document.getElementById('prompt').value = "";
 
             // Wyślij zapytanie do API
             try {
@@ -83,7 +113,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ prompt, model_name: model }),  // Przekształć dane do formatu JSON
+                    body: JSON.stringify({ prompt, model_name: model, chat_topic: chatTopic }),  // Przekształć dane do formatu JSON
                 });
 
                 // Sprawdź, czy odpowiedź jest poprawna
@@ -94,13 +124,121 @@
                 // Przetwórz odpowiedź JSON
                 const data = await response.json();
 
-                // Wyświetl odpowiedź
-                document.getElementById('response').textContent = data.response;
+                // Zaktualizuj historię rozmów
+                updateChatHistory(data.chat_history);
             } catch (error) {
                 // Obsłuż błędy
-                document.getElementById('response').textContent = "Wystąpił błąd: " + error.message;
+                alert("Wystąpił błąd: " + error.message);
             }
         });
+
+        // Obsługa przełączania czatu
+        document.getElementById('chat-topic').addEventListener('change', async (e) => {
+            const chatTopic = e.target.value;
+
+            try {
+                const response = await fetch('/switch_chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ chat_topic: chatTopic }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Błąd podczas przełączania czatu.');
+                }
+
+                const data = await response.json();
+                document.getElementById('current-chat-topic').textContent = chatTopic;
+                updateChatHistory(data.chat_history);
+            } catch (error) {
+                alert("Wystąpił błąd: " + error.message);
+            }
+        });
+
+        // Obsługa tworzenia nowego czatu
+        document.getElementById('create-chat').addEventListener('click', async () => {
+            const newChatTopic = document.getElementById('new-chat-topic').value;
+
+            if (!newChatTopic) {
+                alert("Proszę podać temat nowego czatu.");
+                return;
+            }
+
+            try {
+                const response = await fetch('/switch_chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ chat_topic: newChatTopic }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Błąd podczas tworzenia nowego czatu.');
+                }
+
+                // Dodaj nowy temat do listy rozwijanej
+                const chatTopicSelect = document.getElementById('chat-topic');
+                const option = document.createElement('option');
+                option.value = newChatTopic;
+                option.textContent = newChatTopic;
+                chatTopicSelect.appendChild(option);
+
+                // Wyczyść pole nowego tematu
+                document.getElementById('new-chat-topic').value = "";
+
+                // Przełącz się na nowy czat
+                chatTopicSelect.value = newChatTopic;
+                chatTopicSelect.dispatchEvent(new Event('change'));
+            } catch (error) {
+                alert("Wystąpił błąd: " + error.message);
+            }
+        });
+
+        // Obsługa czyszczenia historii
+        document.getElementById('clear-history').addEventListener('click', async () => {
+            const chatTopic = document.getElementById('chat-topic').value;
+
+            try {
+                const response = await fetch('/clear_history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ chat_topic: chatTopic }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Błąd podczas czyszczenia historii.');
+                }
+
+                // Wyczyść historię na stronie
+                updateChatHistory([]);
+            } catch (error) {
+                alert("Wystąpił błąd: " + error.message);
+            }
+        });
+
+        // Funkcja do aktualizacji historii rozmów na stronie
+        function updateChatHistory(chatHistory) {
+            const chatHistoryDiv = document.getElementById('chat-history');
+            chatHistoryDiv.innerHTML = "";  // Wyczyść historię
+
+            chatHistory.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`;
+                messageDiv.innerHTML = `
+                    <strong>${message.role}:</strong> ${message.content}<br>
+                    <small>Model: ${message.model}</small>
+                `;
+                chatHistoryDiv.appendChild(messageDiv);
+            });
+
+            // Przewiń do najnowszej wiadomości
+            chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+        }
     </script>
 </body>
 </html>

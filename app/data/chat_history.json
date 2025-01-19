@@ -1,0 +1,22 @@
+[
+    {
+        "role": "user",
+        "content": "hey",
+        "model": "codellama:latest"
+    },
+    {
+        "role": "model",
+        "content": "\nhi",
+        "model": "codellama:latest"
+    },
+    {
+        "role": "user",
+        "content": "what we do ton=ight",
+        "model": "codellama:latest"
+    },
+    {
+        "role": "model",
+        "content": "\nTonight, you and I can do many things together! Here are some ideas:\n\n1. Have a movie night: Choose a movie you both want to see and spend the evening watching it while snuggled up on the couch.\n2. Go for a walk: Take a walk in your neighborhood or around the block to get some fresh air and stretch our legs.\n3. Cook a dinner together: Choose a recipe you both like and spend the evening cooking a delicious meal in the kitchen.\n4. Play a game: Choose a game that you both enjoy, such as cards, board games, or video games, and spend the evening playing together.\n5. Have a spa night: Set up a relaxation station with face masks, candles, and soft music and spend the evening pampering ourselves.\n6. Go out and explore: Choose a new place you both want to try and spend the evening exploring and trying new things together.\n7. Have a picnic: Pack a basket with your favorite snacks and drinks and have a picnic in a park or other outdoor spot.\n8. Have a DIY project night: Choose a craft or DIY project that you both want to try and spend the evening working on together.\n9. Go to a concert or show: Choose an event that you both want to see and spend the evening enjoying live entertainment.\n10. Have a wine and cheese night: Choose a wine and cheese pairing that you both like and spend the evening sipping and snacking together.",
+        "model": "codellama:latest"
+    }
+]
