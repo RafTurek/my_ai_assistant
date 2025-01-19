@@ -1,4 +1,4 @@
-# Konsolowy Asystent AI
+# Ai_assistant with LLM and FLask
 
 Assistant made with Opensource LLM Locally in Flask App
 
