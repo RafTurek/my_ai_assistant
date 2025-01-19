@@ -1,9 +1,9 @@
 # Konsolowy Asystent AI
 
-Prosty asystent AI oparty na modelach LLM, działający w konsoli.
+Assistant made with Opensource LLM Locally in Flask App
 
-## Jak uruchomić?
+## How to run?
 
-1. Zainstaluj zależności:
+1. Install:
    ```bash
    pip install -r requirements.txt
