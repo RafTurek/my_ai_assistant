@@ -2,6 +2,7 @@
 
 from flask import Flask, request, jsonify, render_template
 from app.core.llm_handler import ask_llm
+import ollama
 
 
 def create_routes(app):
@@ -12,8 +13,18 @@ def create_routes(app):
     print("Creating routes...")
     @app.route('/')
     def home():
+        """
+        Home route.
+        """
+        #Fetch list of models
+        models = ollama.list()['models']
+        model_names = [model['name'] for model in models]
+
+
         print("Home route") # Debugging
-        return render_template('index.html')
+        return render_template('index.html', models=model_names)
+    
+
 
 
     @app.route('/ask', methods=['POST'])
