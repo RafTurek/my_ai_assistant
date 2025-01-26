@@ -10,11 +10,11 @@
             font-family: Arial, sans-serif;
             margin: 20px;
             padding: 0;
-            background-color: #f4f4f9;
-            color: #333;
+            background-color: #475267;
+            color: #ffffff;
         }
         h1 {
-            color: #444;
+            color: #ffffff;
         }
         form {
             margin-bottom: 20px;
@@ -22,12 +22,19 @@
         label {
             font-weight: bold;
         }
-        input[type="text"], select {
-            width: 300px;
+        input[type="text"], select, textarea {
+            width: 100%;
             padding: 8px;
             margin-top: 5px;
-            border: 1px solid #ccc;
+            border: 2px solid #9192c4;
             border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        textarea {
+            height: 150px;
+            resize: vertical;
+            background-color: #cbfcd6;
         }
         button {
             padding: 8px 16px;
@@ -43,7 +50,7 @@
         #chat-history {
             margin-top: 20px;
             padding: 10px;
-            background-color: #fff;
+            background-color: #4c4c4c;
             border: 1px solid #ccc;
             max-height: 400px;
             overflow-y: auto;
@@ -52,12 +59,14 @@
             margin-bottom: 10px;
             padding: 10px;
             border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
         }
         .user-message {
-            background-color: #e3f2fd;
+            background-color: #a15d4e;
         }
         .assistant-message {
-            background-color: #f5f5f5;
+            background-color: #5c5487;
         }
     </style>
 </head>
@@ -73,7 +82,7 @@
         <input type="text" id="new-chat-topic" placeholder="Nowy temat czatu">
         <button type="button" id="create-chat">Utwórz nowy czat</button><br><br>
         <label for="prompt">Twoje pytanie:</label><br>
-        <input type="text" id="prompt" name="prompt" required placeholder="Wpisz swoje pytanie..."><br><br>
+        <textarea id="prompt" name="prompt" required placeholder="Wpisz swoje pytanie..."></textarea><br><br>
         <label for="model">Wybierz model:</label><br>
         <select id="model" name="model">
             {% for model in models %}
@@ -84,11 +93,14 @@
     </form>
     <h2>Historia czatu: <span id="current-chat-topic">Ogólny</span></h2>
     <div id="chat-history">
-        {% for message in chat_history.get('Ogólny', []) %}
-            <div class="message {% if message.role == 'user' %}user-message{% else %}assistant-message{% endif %}">
-                <strong>{{ message.role }}:</strong> {{ message.content }}<br>
-                <small>Model: {{ message.model }}</small>
-            </div>
+        {% for topic, messages in chat_history.items() %}
+            <h3>{{ topic }}</h3>
+            {% for message in messages %}
+                <div class="message {% if message.role == 'user' %}user-message{% else %}assistant-message{% endif %}">
+                    <strong>{{ message.role }}:</strong> {{ message.content }}<br>
+                    <small>Model: {{ message.model }}</small>
+                </div>
+            {% endfor %}
         {% endfor %}
     </div>
     <button id="clear-history" type="button">Wyczyść historię</button>
@@ -200,6 +212,7 @@
         // Obsługa czyszczenia historii
         document.getElementById('clear-history').addEventListener('click', async () => {
             const chatTopic = document.getElementById('chat-topic').value;
+            
 
             try {
                 const response = await fetch('/clear_history', {
@@ -225,6 +238,8 @@
         function updateChatHistory(chatHistory) {
             const chatHistoryDiv = document.getElementById('chat-history');
             chatHistoryDiv.innerHTML = "";  // Wyczyść historię
+
+        
 
             chatHistory.forEach(message => {
                 const messageDiv = document.createElement('div');
